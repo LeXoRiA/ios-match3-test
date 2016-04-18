@@ -1,7 +1,7 @@
 package QA;
 
 /**
- * Created by qa1 on 23.2.2016.
+ * Created by Eligra on 23.2.2016.
  */
 
 import io.appium.java_client.TouchAction;
