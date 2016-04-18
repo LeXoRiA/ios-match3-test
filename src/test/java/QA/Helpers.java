@@ -3,9 +3,13 @@ package QA;
 /**
  * Created by qa1 on 23.2.2016.
  */
+
 import io.appium.java_client.TouchAction;
 import io.appium.java_client.ios.IOSDriver;
 import nu.pattern.OpenCV;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
 import org.opencv.core.*;
 import org.opencv.highgui.Highgui;
 import org.opencv.imgproc.Imgproc;
@@ -15,10 +19,7 @@ import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -453,21 +454,158 @@ public abstract class Helpers {
         return;
     } // end Canny
 
-    // FINISHER
-    public void allinOne (final String name, String imageUrl, String destinationFile,
-                          String template, String image, String imageGray, String imageCanny,
-                          String resizedCanny, String resultCanny, String matchCase,
-                          String outFile, IOSDriver _driver2, int second) throws Exception
-    {
-        takeScreenshot(name, _driver2);
-        log("Screenshot captured");
-        saveImage (imageUrl, destinationFile, _driver2);
-        log("Template has been saved from server");
-        sleep(1);
-        Canny(template, image, imageGray, imageCanny, resizedCanny, resultCanny, matchCase, outFile, _driver2);
-        sleep(second);
+
+    // JSON Collector and FINISHER
+    public void actionStations(String fileName, IOSDriver _driver2) throws Exception {
+
+        String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("java.io.tmpdir", ""));
+
+        try {
+            String jsonFile = screenshotDirectory + "/" + fileName;
+            URL link = new URL("https://s3.amazonaws.com/infosfer-ab-test/jsonfiles/" + fileName + ".json");
+
+            //Code to download JSON and read it
+            InputStream in = new BufferedInputStream(link.openStream());
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[1024];
+            int q = 0;
+            while (-1 != (q = in.read(buf))) {
+                out.write(buf, 0, q);
+            }
+            out.close();
+            in.close();
+            byte[] response = out.toByteArray();
+
+            FileOutputStream fos = new FileOutputStream(jsonFile);
+            fos.write(response);
+            fos.close();
+            //End download code
+
+            log("JSON File has been saved!");
+
+            FileReader reader = new FileReader(jsonFile);
+            JSONParser parser = new JSONParser();
+            Object obj = parser.parse(reader);
+
+            JSONObject jsonObject = (JSONObject) obj;
+
+            JSONArray functionList = (JSONArray) jsonObject.get("Functions");
+
+            int n = 0;
+            while (n < functionList.size()) {
+                JSONObject jObject = (JSONObject) functionList.get(n);
+
+                String methodType = (String) jObject.get("methodType");
+
+                if (methodType.equals("imageRec")) {
+                    String name = (String) jObject.get("screenshotNameObj");
+                    String imageUrl = "http://infosfer-ab-test.s3-website-us-east-1.amazonaws.com/tmpics/" + (String) jObject.get("imageURLObj") + ".png";
+                    String destinationFile = screenshotDirectory + "/" + jObject.get("destinationImageObj") + ".png";
+                    String template = "/" + (String) jObject.get("templateNameObj") + ".png";
+                    String image = "/" + (String) jObject.get("sourceNameObj") + ".png";
+                    String imageGray = "/" + (String) jObject.get("grayedSourceObj") + ".png";
+                    String imageCanny = "/" + (String) jObject.get("cannySourceObj") + ".png";
+                    String resizedCanny = "/" + (String) jObject.get("resizedCannyObj") + ".png";
+                    String resultCanny = "/" + (String) jObject.get("cannyResultObj") + ".png";
+                    String matchCase = (String) jObject.get("actionObj");
+                    String outFile = "/" + (String) jObject.get("outImageObj") + ".png";
+                    long seconds = (Long) jObject.get("sleepTimeObj");
+                    int second = (int) seconds;
+
+                    takeScreenshot(name, _driver2);
+                    log("Screenshot captured");
+                    saveImage(imageUrl, destinationFile, _driver2);
+                    log("Template has been saved from server");
+                    sleep(1);
+                    Canny(template, image, imageGray, imageCanny, resizedCanny, resultCanny, matchCase, outFile, _driver2);
+                    sleep(second);
+                    n++;
+                } else if (methodType.equals("location")) {
+
+                    long locStartL = (Long) jObject.get("startPositionObj");
+                    int locStart = (int) locStartL;
+
+                    long locEndL = (Long) jObject.get("endPositionObj");
+                    int locEnd = (int) locEndL;
+
+                    String resolution = new String();
+
+                    int originH, originW;
+                    int startX, startY;
+                    int endX, endY;
+
+                    originH = _driver2.manage().window().getSize().getHeight();
+                    originW = _driver2.manage().window().getSize().getWidth();
+
+                    int origin[] = new int[2];
+
+                    origin[0] = originW / 2;
+                    origin[1] = originH / 2;
+
+                    int tempA, tempB;
+                    int k = 20; //px (for CK)
+                    double m;
+
+                    /* Ratio for piece coordinates */
+                    m = ((float) originH / 2560.f) * 4.5;
+
+                    log("m: " + m);
+                    double E = k * m;
+
+                    int pointA, pointB;
+
+                    Point[] ckCells = new Point[64];
+                    int i = -7;
+                    int j = -7;
+
+                    for (int a = 0; a < 64; a++) {
+                        tempA = (int) (E * j);
+                        tempB = (int) (E * i);
+
+                        pointA = origin[0] + tempA;
+                        pointB = origin[1] + tempB;
+
+                        Point cellLoc = new Point(pointA, pointB);
+                        ckCells[a] = cellLoc;
+
+                        cellLoc.x = pointA;
+                        cellLoc.y = pointB;
+
+                        j = j + 2;
+
+                        if ((a + 1) % 8 == 0) {
+                            i = i + 2;
+                            j = -7;
+                        } //end if
+                    } //end for
+
+                    Point cellStart = ckCells[locStart];
+
+                    startX = (int) cellStart.x;
+                    startY = (int) cellStart.y;
+
+                    Point cellEnd = ckCells[locEnd];
+
+                    endX = (int) cellEnd.x;
+                    endY = (int) cellEnd.y;
+
+                    log("startX: " + startX);
+                    log("startY: " + startY);
+                    log("endX: " + endX);
+                    log("endY: " + endY);
+
+                    TouchAction action = new TouchAction (_driver2);
+                    action.longPress(startX, startY).moveTo((endX - startX), (endY - startY)).release().perform();
+                    sleep(10);
+
+                    n++;
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-} // end Helpers class
+}
 
 
 
