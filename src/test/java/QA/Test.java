@@ -7,7 +7,6 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.net.URL;
 
-//import org.apache.xpath.operations.String;
 
 /**
  * Created by Eligra on 23.2.2016.
@@ -18,15 +17,6 @@ public class Test extends Helpers
     private IOSDriver driver;
 
 
-    public static class CKTest extends Helpers
-    {
-        public CKTest() throws Exception
-        {
-            super();
-            screenshotsFolder = "ck";
-        }
-        private  String sessionId;
-    }
 
     @Before
     public void setUp() throws Exception
