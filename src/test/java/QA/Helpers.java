@@ -28,7 +28,8 @@ import java.util.concurrent.TimeUnit;
 
 
 
-public abstract class Helpers {
+public abstract class Helpers
+{
     public static IOSDriver driver;
 
     public static URL serverAddress;
@@ -39,7 +40,8 @@ public abstract class Helpers {
      * Initialize the webdriver. Must be called before using any helper methods. *
      */
 
-    public static void init(IOSDriver MobileDriver, URL driverServerAddress) {
+    public static void init(IOSDriver MobileDriver, URL driverServerAddress)
+    {
         driver = MobileDriver;
         serverAddress = driverServerAddress;
         int timeoutInSeconds = 60;
@@ -255,7 +257,6 @@ public abstract class Helpers {
         return resizedCannyStr;
     } // end resizeCanny
 
-
     // Match template and image and then click/swipe.
     public void Canny (String template, String image, String imageGray, String imageCanny, String resizedCanny, String resultCanny, String matchCase,
                        String outFile, IOSDriver _driver2) throws Exception
@@ -316,8 +317,8 @@ public abstract class Helpers {
         space = (linStart - linEnd) / counter;
 
         // For loop. The mothership of automation.
-        for (double scale = linStart; scale >= linEnd; scale = scale - space) {
-
+        for (double scale = linStart; scale >= linEnd; scale = scale - space)
+        {
 /*Keep Appium alive*/ _driver2.getOrientation();
 
             // Get H and W of grayed image. And multiply the width with scale for multi-scale.
@@ -457,13 +458,13 @@ public abstract class Helpers {
         return;
     } // end Canny
 
-
     // JSON Collector and FINISHER
-    public void actionStations(String fileName, IOSDriver _driver2) throws Exception {
-
+    public void actionStations(String fileName, IOSDriver _driver2) throws Exception
+    {
         String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("java.io.tmpdir", ""));
 
-        try {
+        try
+        {
             String jsonFile = screenshotDirectory + "/" + fileName;
             URL link = new URL("https://s3.amazonaws.com/infosfer-ab-test/jsonfiles/" + fileName + ".json");
 
@@ -472,7 +473,8 @@ public abstract class Helpers {
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buf = new byte[1024];
             int q = 0;
-            while (-1 != (q = in.read(buf))) {
+            while (-1 != (q = in.read(buf)))
+            {
                 out.write(buf, 0, q);
             }
             out.close();
@@ -495,13 +497,14 @@ public abstract class Helpers {
             JSONArray functionList = (JSONArray) jsonObject.get("Functions");
 
             int n = 0;
-            while (n < functionList.size()) {
+            while (n < functionList.size())
+            {
                 JSONObject jObject = (JSONObject) functionList.get(n);
 
                 String methodType = (String) jObject.get("methodType");
 
-                if (methodType.equals("imageRec")) {
-
+                if (methodType.equals("imageRec"))
+                {
                     log("IR action started");
 
                     String name = (String) jObject.get("screenshotNameObj");
@@ -522,13 +525,14 @@ public abstract class Helpers {
                     log("Screenshot captured");
                     saveImage(imageUrl, destinationFile, _driver2);
                     log("Template has been saved from server");
-//                    sleep(1);
                     Canny(template, image, imageGray, imageCanny, resizedCanny, resultCanny, matchCase, outFile, _driver2);
                     n++;
                     log("Action done (IR)");
                     sleep(second);
 
-                } else if (methodType.equals("location")) {
+                }
+                else if (methodType.equals("location"))
+                {
 
                     log("Loc action started");
 
@@ -540,7 +544,6 @@ public abstract class Helpers {
 
                     long seconds = (Long) jObject.get("sleepTimeObj");
                     int second = (int) seconds;
-
 
                     String resolution = new String();
 
@@ -572,7 +575,8 @@ public abstract class Helpers {
                     int i = -7;
                     int j = -7;
 
-                    for (int a = 0; a < 64; a++) {
+                    for (int a = 0; a < 64; a++)
+                    {
                         tempA = (int) (E * j);
                         tempB = (int) (E * i);
 
@@ -587,7 +591,8 @@ public abstract class Helpers {
 
                         j = j + 2;
 
-                        if ((a + 1) % 8 == 0) {
+                        if ((a + 1) % 8 == 0)
+                        {
                             i = i + 2;
                             j = -7;
                         } //end if
@@ -617,7 +622,9 @@ public abstract class Helpers {
                     sleep(second);
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
     }
