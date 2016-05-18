@@ -29,15 +29,15 @@ public class Test extends Helpers
     {
         log("Test script started");
         log("Launching application...");
-        sleep(30);
+        sleep(30); // Wait while application is launching
+        log("Application is ready!");
 
         String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("javaior.tmpdir", ""));
 
-
-        /*Flasgship*/
+        /* Flasgship */
         actionStations("BigTest", driver);
 
-        /*Take screenshot to see last situation*/
+        /* Take screenshot to see the last situation */
         takeScreenshot("last", driver);
     }
 

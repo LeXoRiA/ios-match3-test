@@ -178,7 +178,7 @@ public abstract class Helpers
         Thread.sleep(seconds * 1000);
     }
 
-    // Take screenshot of application while it's running.
+    /* Take screenshot of application while it's running */
     public boolean takeScreenshot(final String name, IOSDriver _driver2)
     {
         String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("java.io.tmpdir", ""));
@@ -186,7 +186,7 @@ public abstract class Helpers
         return screenshot.renameTo(new File(screenshotDirectory, String.format("/%s.png", name)));
     }
 
-    // Save image from URL (AWS S3)
+    /* Save image from URL (AWS S3) */
     public void saveImage (String imageUrl, String destinationFile, IOSDriver _driver2) throws Exception
     {
         String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("java.io.tmpdir", ""));
@@ -209,7 +209,7 @@ public abstract class Helpers
         return;
     }
 
-    // Resize image to Canny and match.
+    /* Resize image to Canny and match */
     public String resizeCanny(String imageCanny, String resizedCanny, String resultCanny, int width, int height, int inter) throws Exception
     {
         String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("java.io.tmpdir", ""));
@@ -218,53 +218,54 @@ public abstract class Helpers
         String resizedCannyStr = screenshotDirectory + resizedCanny;
         String resultCannyStr = screenshotDirectory + resultCanny;
 
-        // Create array for new dimensions and get H and W of image.
+        /* Create array for new dimensions and get H and W of image */
         int[] dim = new int[2];
         int hCan = Highgui.imread(imageCannyStr).height();
         int wCan = Highgui.imread(imageCannyStr).width();
 
-        // Conditions:
+        /* Conditions: */
         if (width == 0 && height == 0)
         {
             return imageCannyStr;
-        } // end if
+        }
         else if (width == 0)
         {
             float r = height / (float) hCan;
             dim[0] = (int)(wCan*r);
             dim[1] = height;
-        } // end else if
+        }
         else
         {
             float r = width/(float)wCan;
             dim[0] = width;
             dim[1] = (int)(hCan*r);
-        } // end else
+        }
 
-        // Some matrix conversions.
+        /* Some matrix conversions */
         Mat imageCannyMat = Highgui.imread(imageCannyStr);
         Mat resizedCannyMat = Highgui.imread(resizedCannyStr);
 
-        // Get new dimension after conditions to resize image.
+        /* Get new dimension after conditions to resize image */
         int nW = dim[0];
         int nH = dim[1];
 
-        // Resize and write the image.
+        /* Resize and write the image */
         Size newDim = new Size(nW, nH);
         Imgproc.resize(imageCannyMat, resizedCannyMat, newDim);
         Highgui.imwrite(resizedCannyStr, resizedCannyMat);
 
         return resizedCannyStr;
-    } // end resizeCanny
+    } //end resizeCanny
 
-    // Match template and image and then click/swipe.
+    /* Match template and image and then click/swipe */
     public void Canny (String template, String image, String imageGray, String imageCanny, String resizedCanny, String resultCanny, String matchCase,
                        String outFile, IOSDriver _driver2) throws Exception
     {
         String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("java.io.tmpdir", ""));
         OpenCV.loadShared();
 
-/*Keep Appium alive*/ _driver2.getOrientation();
+        /* Keep Appium alive */
+        _driver2.getOrientation();
 
         String templateStr = screenshotDirectory + template;
         String imageStr = screenshotDirectory + image;
@@ -274,13 +275,13 @@ public abstract class Helpers
         String resultCannyStr = screenshotDirectory + resultCanny;
         String outFileStr = screenshotDirectory + outFile;
 
-        // Variables for linspace.
+        /* Variables for linspace */
         double linStart;
         double linEnd;
         double counter;
         double space;
 
-        // Read template, convert it to gray and Canny it.
+        /* Read template, convert it to gray and Canny it */
         Mat templateMat = Highgui.imread(templateStr);
 
         Imgproc.cvtColor(templateMat, templateMat, Imgproc.COLOR_BGR2GRAY);
@@ -291,95 +292,97 @@ public abstract class Helpers
 
         Mat templateMatchMat = Highgui.imread(templateStr);
 
-        // Get Height and Width of template image.
+        /* Get Height and Width of template image */
         int tH = Highgui.imread(templateStr).height();
         int tW = Highgui.imread(templateStr).width();
 
-        // Start counter
+        /* Start counter */
         int ctr = 0;
 
-        // Read image and convert it to gray.
+        /* Read image and convert it to gray */
         Mat imageMat = Highgui.imread(imageStr);
         Mat imgGryMat = Highgui.imread(imageStr);
 
         Imgproc.cvtColor(imageMat, imgGryMat, Imgproc.COLOR_BGR2GRAY);
         Highgui.imwrite(imageGrayStr, imgGryMat);
 
-        // Some parameters to use in every turn of for loop.
+        /* Some parameters to use in every turn of for loop */
         double[] found = new double[4];
         Point mLoc = null;
         float r = 0;
 
-        // Values for linspace and for loop.
+        /* Values for linspace and for loop */
         linStart = 1.0;
         linEnd = 0.2;
         counter = 20;
         space = (linStart - linEnd) / counter;
 
-        // For loop. The mothership of automation.
+        /* For loop. The mothership of the script */
         for (double scale = linStart; scale >= linEnd; scale = scale - space)
         {
-/*Keep Appium alive*/ _driver2.getOrientation();
+            /* Keep Appium alive */
+            _driver2.getOrientation();
 
-            // Get H and W of grayed image. And multiply the width with scale for multi-scale.
+            /* Get H and W of grayed image. And multiply the width with scale for multi-scale */
             int gryW = Highgui.imread(imageGrayStr).width();
             double newWidth = gryW * scale;
             int gryH = Highgui.imread(imageGrayStr).height();
 
-            // Change the name for easy use in resizeCanny() function.
+            /* Change the name for easy use in resizeCanny() function */
             imageCanny = imageGray;
 
-            // Start resizeCanny function. It resizes the image to Canny and match for later.
+            /* Start resizeCanny function. It resizes the image to Canny and match for later */
             resizeCanny(imageCanny, resizedCanny, resultCanny, (int) newWidth, gryH, Imgproc.INTER_AREA);
 
-            // Get H and W of resized image.
+            /* Get H and W of resized image */
             int rszH = Highgui.imread(resizedCannyStr).height();
             int rszW = Highgui.imread(resizedCannyStr).width();
 
-            // r = grayed image's width / resized image's width.
+            /* r = (grayed image's width)/(resized image's width) */
             r = gryW / (float) rszW;
 
-            // If resized image is smaller than template, then break.
+            /* If resized image is smaller than template, then break */
             if (rszH < tH || rszW < tW)
             {
                 break;
             }
 
-            // Some matrix conversion.
+            /* Some matrix conversion */
             Mat resizedCannyMat = Highgui.imread(resizedCannyStr);
             String edged = resizedCannyStr;
             Mat edgedMat = Highgui.imread(edged);
 
-            // Canny and write the image that has been resized.
+            /* Canny and write the image that has been resized */
             Imgproc.Canny(resizedCannyMat, edgedMat, 50, 200);
             Highgui.imwrite(resultCannyStr, edgedMat);
 
-            // Some matrix conversions.
+            /* Some matrix conversions */
             Mat resultCannyMat = Highgui.imread(resultCannyStr);
             String matchResult = resultCannyStr;
             Mat matchResultMat = Highgui.imread(matchResult);
 
-            // Match Canny'd template and Canny'd image.
+            /* Match Canny'd template and Canny'd image */
             Imgproc.matchTemplate(resultCannyMat, templateMatchMat, matchResultMat, Imgproc.TM_CCOEFF);
 
-            // Get maximum value and maximum location.
+            /* Get maximum value and maximum location */
             Core.MinMaxLocResult mmrValues = Core.minMaxLoc(matchResultMat);
             mLoc = mmrValues.maxLoc;
             double mVal = mmrValues.maxVal;
 
-            // If found array is empty maximum value is bigger than previous max value, then update the variables.
+            /* If found array is empty maximum value is bigger than previous max value, then update the variables */
             if (found == null || mVal > found[0])
             {
                 found[0] = mVal;
                 found[1] = mLoc.x;
                 found[2] = mLoc.y;
                 found[3] = (double) r;
-            } // end if
-        } // end for
+            } //end if
+        } //end for
 
-/*Keep Appium alive*/ _driver2.getOrientation();
+        /*Keep Appium alive*/
+        _driver2.getOrientation();
 
-        // After for loop; update maximum location pointers (x,y) with found array to choose/show.
+        /* After for loop; update maximum location pointers (x,y) with found array to choose/show */
         mLoc.x = found[1];
         mLoc.y = found[2];
         r = (float)found[3];
@@ -392,42 +395,46 @@ public abstract class Helpers
         endX = (int) ((mLoc.x + tW) * r);
         endY = (int) ((mLoc.y + tH) * r);
 
-//        // Draw rectangle on match.
-////////////        Core.rectangle(imageMat, new Point(startX, startY), new Point(endX, endY), new Scalar(0, 0, 255));
-//
-//        // Write the matched imaged to show if it's true or not.
-////////////        log("Writing image as " + outFile);
-////////////        Highgui.imwrite(outFileStr, imageMat);
+        log("startX, startY: " + startX + " : " + startY);
 
+        /*
+        // Draw rectangle on match.
+        Core.rectangle(imageMat, new Point(startX, startY), new Point(endX, endY), new Scalar(0, 0, 255));
 
-        // Get dimensions
+        // Write the matched imaged to show if it's true or not.
+        log("Writing image as " + outFile);
+        Highgui.imwrite(outFileStr, imageMat);
+        */
 
-        // Get device dimensions
+        /*  Get device dimensions */
         double deviceResH = _driver2.manage().window().getSize().getHeight();
         double deviceResW = _driver2.manage().window().getSize().getWidth();
         log("Device dimensions: " + deviceResH + "x" + deviceResW);
 
-        // Take temproray screenshot
+        /* Take temproray screenshot */
         String temprSSname = "temprSS";
         File screenshot = ((TakesScreenshot) _driver2).getScreenshotAs(OutputType.FILE);
         screenshot.renameTo(new File(screenshotDirectory, String.format("/%s.png", temprSSname)));
 
         String newSS = screenshotDirectory + "/" + temprSSname + ".png";
 
-        //Get screenshot dimensions
+        /* Get screenshot dimensions */
         double ssH = Highgui.imread(newSS).height();
         double ssW = Highgui.imread(newSS).width();
 
-        // Calculate the point for iOS devices
+        /* Calculate the point for iOS devices */
         int k = (int)ssH / (int)deviceResH;
         int m = (int)ssW / (int)deviceResW;
 
         int startXF = (startX/m) + 5;
         int startYF = (startY/k) + 5;
 
-    /*Keep Appium alive*/ _driver2.getOrientation();
+        log("startXF, startYF: " + startXF + " : " + startYF);
 
-        // Make your move
+        /* Keep Appium alive */
+        _driver2.getOrientation();
+
+        /* Make your move */
         if (matchCase.equalsIgnoreCase("Down"))
         {
             TouchAction action = new TouchAction (_driver2);
@@ -452,13 +459,10 @@ public abstract class Helpers
         {
             _driver2.tap(1, startXF, startYF, 20);
         }
-
-
-
         return;
-    } // end Canny
+    } //end Canny
 
-    // JSON Collector and FINISHER
+    /* JSON Collector and FINISHER */
     public void actionStations(String fileName, IOSDriver _driver2) throws Exception
     {
         String screenshotDirectory = System.getProperty("appium.screenshots.dir", System.getProperty("java.io.tmpdir", ""));
@@ -468,7 +472,7 @@ public abstract class Helpers
             String jsonFile = screenshotDirectory + "/" + fileName;
             URL link = new URL("https://s3.amazonaws.com/infosfer-ab-test/jsonfiles/" + fileName + ".json");
 
-            //Code to download JSON and read it
+            /* Download JSON file and read it */
             InputStream in = new BufferedInputStream(link.openStream());
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             byte[] buf = new byte[1024];
@@ -484,29 +488,33 @@ public abstract class Helpers
             FileOutputStream fos = new FileOutputStream(jsonFile);
             fos.write(response);
             fos.close();
-            //End download code
+            /* Got JSON */
 
             log("JSON File has been saved!");
 
+            /* Keep Appium alive */
+            _driver2.getOrientation();
+
+            /* Parse JSON file */
             FileReader reader = new FileReader(jsonFile);
             JSONParser parser = new JSONParser();
             Object obj = parser.parse(reader);
 
             JSONObject jsonObject = (JSONObject) obj;
-
             JSONArray functionList = (JSONArray) jsonObject.get("Functions");
 
             int n = 0;
             while (n < functionList.size())
             {
                 JSONObject jObject = (JSONObject) functionList.get(n);
-
                 String methodType = (String) jObject.get("methodType");
 
+                /* If image recognition is needed, then make this happen */
                 if (methodType.equals("imageRec"))
                 {
                     log("IR action started");
 
+                    /* Get necessary variables from JSON */
                     String name = (String) jObject.get("screenshotNameObj");
                     String imageUrl = "http://infosfer-ab-test.s3-website-us-east-1.amazonaws.com/tmpics/" + (String) jObject.get("imageURLObj") + ".png";
                     String destinationFile = screenshotDirectory + "/" + jObject.get("destinationImageObj") + ".png";
@@ -521,21 +529,25 @@ public abstract class Helpers
                     long seconds = (Long) jObject.get("sleepTimeObj");
                     int second = (int) seconds;
 
+                    /* Do the thing */
                     takeScreenshot(name, _driver2);
                     log("Screenshot captured");
                     saveImage(imageUrl, destinationFile, _driver2);
                     log("Template has been saved from server");
                     Canny(template, image, imageGray, imageCanny, resizedCanny, resultCanny, matchCase, outFile, _driver2);
                     n++;
+
                     log("Action done (IR)");
                     sleep(second);
 
-                }
+                } //end if (IR action)
+
+                /* If on-board action is needed, then make this happen */
                 else if (methodType.equals("location"))
                 {
-
                     log("Loc action started");
 
+                    /* Get location data from JSON */
                     long locStartL = (Long) jObject.get("startPositionObj");
                     int locStart = (int) locStartL;
 
@@ -551,6 +563,7 @@ public abstract class Helpers
                     int startXL, startYL;
                     int endXL, endYL;
 
+                    /* Get device's current size */
                     originH = _driver2.manage().window().getSize().getHeight();
                     originW = _driver2.manage().window().getSize().getWidth();
 
@@ -563,10 +576,10 @@ public abstract class Helpers
                     int k = 20; //px (for CK)
                     double m;
 
-                    /* Ratio for piece coordinates */
+                    /* Ratio (coefficient) for different resolution devices */
                     m = ((float) originH / 2560.f) * 4.5;
 
-                    log("m: " + m);
+                    log("Ratio (coefficient) (m): " + m);
                     double E = k * m;
 
                     int pointA, pointB;
@@ -575,6 +588,8 @@ public abstract class Helpers
                     int i = -7;
                     int j = -7;
 
+                    /* Calculate locations of 64 cells (for CK) according to 'm'
+                    i for columns for each row and j for rows */
                     for (int a = 0; a < 64; a++)
                     {
                         tempA = (int) (E * j);
@@ -595,16 +610,13 @@ public abstract class Helpers
                         {
                             i = i + 2;
                             j = -7;
-                        } //end if
+                        }
                     } //end for
-
                     Point cellStart = ckCells[locStart];
-
                     startXL = (int) cellStart.x;
                     startYL = (int) cellStart.y;
 
                     Point cellEnd = ckCells[locEnd];
-
                     endXL = (int) cellEnd.x;
                     endYL = (int) cellEnd.y;
 
@@ -615,21 +627,16 @@ public abstract class Helpers
 
                     TouchAction action = new TouchAction (_driver2);
                     action.longPress(startXL, startYL).moveTo((endXL - startXL), (endYL - startYL)).release().perform();
-
                     n++;
 
                     log("Action done (Loc)");
                     sleep(second);
-                }
-            }
-        }
+                } //end else if (location action)
+            } //end while
+        } //end try
         catch (Exception e)
         {
             e.printStackTrace();
         }
-    }
-}
-
-
-
-
+    } //end actionStation
+} //end class (Helpers)
